@@ -3,28 +3,88 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Twibbon Maker Pro (1080x1920)</title>
+    <title>Twibbon Generator Pro</title>
     <style>
-        body { 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-            text-align: center; 
-            padding: 15px; 
-            background-color: #f5f7fb;
-            color: #333;
-            margin: 0;
+        :root {
+            --primary: #4F46E5;
+            --primary-hover: #4338CA;
+            --success: #10B981;
+            --success-hover: #059669;
+            --secondary: #6B7280;
+            --bg-main: #F3F4F6;
+            --bg-card: #FFFFFF;
+            --text-main: #1F2937;
+            --text-muted: #4B5563;
         }
-        h1 { margin-bottom: 5px; font-size: 24px; }
-        p { color: #666; margin-top: 0; font-size: 14px; }
+
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body { 
+            font-family: '-apple-system', BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        /* Container utama diset seukuran layar HP */
+        .mobile-container {
+            width: 100%;
+            max-width: 480px;
+            min-height: 100vh;
+            background-color: var(--bg-card);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 15px;
+        }
+
+        header h1 { 
+            font-size: 22px; 
+            font-weight: 800;
+            margin: 0 0 4px 0;
+            background: linear-gradient(to right, var(--primary), #818CF8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        header p { 
+            color: var(--text-muted); 
+            margin: 0; 
+            font-size: 13px; 
+        }
         
+        /* Area Canvas Box */
+        .canvas-wrapper {
+            position: relative;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-grow: 1;
+        }
+
         #canvas-container { 
             position: relative; 
-            display: inline-block; 
-            margin-top: 10px; 
-            max-width: 90%; 
-            max-height: 60vh; 
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            background: #fff;
-            border-radius: 12px;
+            width: 100%;
+            aspect-ratio: 9 / 16; /* Menjaga rasio 1080x1920 tetap proporsional */
+            max-height: 55vh;
+            box-shadow: 0 12px 30px rgba(0,0,0,0.12);
+            background: #E5E7EB;
+            border-radius: 16px;
             overflow: hidden;
             cursor: move;
             touch-action: none;
@@ -32,99 +92,149 @@
         
         canvas { 
             display: block;
-            max-width: 100%; 
-            max-height: 60vh;
+            width: 100%;
+            height: 100%;
             object-fit: contain;
-            height: auto; 
         }
         
-        .controls { 
-            margin-top: 15px; 
-            margin-bottom: 30px;
-            padding: 0 10px;
-        }
-        
-        .slider-container {
-            margin: 15px auto;
-            max-width: 300px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 10px;
+        /* Area Kontrol Panel */
+        .control-panel { 
+            background: #F9FAFB;
+            border-radius: 16px;
+            padding: 16px;
+            border: 1px solid #E5E7EB;
         }
 
-        .slider-container label {
-            font-size: 14px;
-            font-weight: bold;
-            color: #555;
+        /* Desain Custom Tombol Upload */
+        .upload-box {
+            margin-bottom: 15px;
+        }
+
+        .file-label {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            background-color: var(--primary);
+            color: white;
+            padding: 12px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 15px;
+            cursor: pointer;
+            transition: background 0.2s;
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.2);
+        }
+        .file-label:hover { background-color: var(--primary-hover); }
+        
+        input[type="file"] { display: none; }
+
+        /* Slider Zoom Custom */
+        .slider-group {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 15px;
+            padding: 4px 0;
+        }
+
+        .slider-group span {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-muted);
+            min-width: 45px;
         }
 
         input[type="range"] {
-            flex-index: 1;
-            width: 100%;
-            accent-color: #007bff;
+            flex: 1;
+            height: 6px;
+            -webkit-appearance: none;
+            background: #E5E7EB;
+            border-radius: 8px;
+            accent-color: var(--primary);
         }
 
-        .btn-group {
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: var(--primary);
+            cursor: pointer;
+        }
+
+        /* Grup Tombol Aksi */
+        .btn-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
             margin-bottom: 15px;
         }
 
         button {
-            padding: 10px 20px;
-            font-size: 15px;
-            margin: 5px;
-            border: none;
-            border-radius: 25px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 11px;
+            font-size: 14px;
+            border: 1px solid #E5E7EB;
+            border-radius: 12px;
             cursor: pointer;
-            font-weight: bold;
+            font-weight: 600;
+            background-color: white;
+            color: var(--text-main);
             transition: all 0.2s;
         }
-
-        .btn-action {
-            background-color: #6c757d;
-            color: white;
-        }
-        .btn-action:hover { background-color: #5a6268; }
+        button:active { transform: scale(0.97); }
+        button:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
 
         .btn-download {
-            background-color: #28a745;
+            grid-column: span 2;
+            background-color: var(--success);
             color: white;
-            padding: 12px 35px;
+            border: none;
             font-size: 16px;
-            box-shadow: 0 3px 10px rgba(40, 167, 69, 0.3);
+            padding: 14px;
+            box-shadow: 0 4px 14px rgba(16, 185, 129, 0.25);
         }
-        .btn-download:hover { background-color: #218838; transform: translateY(-1px); }
-        .btn-download:disabled { background-color: #ccc; cursor: not-allowed; box-shadow: none; transform: none; }
-        
-        input[type="file"] {
-            margin: 10px 0;
-            font-size: 14px;
-        }
+        .btn-download:hover { background-color: var(--success-hover); }
+        .btn-download:disabled { background-color: #D1D5DB; box-shadow: none; color: #9CA3AF; }
     </style>
 </head>
 <body>
 
-    <h1>Twibbon Maker 📸</h1>
-    <p>Geser foto langsung di frame. Gunakan slider untuk zoom dan tombol putar jika miring.</p>
-
-    <input type="file" id="upload-input" accept="image/*">
-    
-    <div id="canvas-container">
-        <canvas id="twibbonCanvas" width="1080" height="1920"></canvas>
-    </div>
-
-    <div class="controls">
-        <div class="slider-container">
-            <label>Zoom:</label>
-            <input type="range" id="zoom-slider" min="10" max="400" value="100" disabled>
-        </div>
-
-        <div class="btn-group">
-            <button id="rotate-btn" class="btn-action" disabled>🔄 Putar 90°</button>
-            <button id="reset-btn" class="btn-action" disabled>Reset</button>
-        </div>
+    <div class="mobile-container">
+        <header>
+            <h1>Twibbon Creator</h1>
+            <p>Geser, perbesar, atau putar fotomu agar pas</p>
+        </header>
         
-        <button id="download-btn" class="btn-download" disabled>Download Hasil</button>
+        <div class="canvas-wrapper">
+            <div id="canvas-container">
+                <canvas id="twibbonCanvas" width="1080" height="1920"></canvas>
+            </div>
+        </div>
+
+        <div class="control-panel">
+            <div class="upload-box">
+                <label for="upload-input" class="file-label">
+                    📷 Pilih Foto Kamu
+                </label>
+                <input type="file" id="upload-input" accept="image/*">
+            </div>
+
+            <div class="slider-group">
+                <span>Zoom</span>
+                <input type="range" id="zoom-slider" min="10" max="400" value="100" disabled>
+            </div>
+
+            <div class="btn-grid">
+                <button id="rotate-btn" disabled>🔄 Putar 90°</button>
+                <button id="reset-btn" disabled>⏱️ Reset</button>
+                <button id="download-btn" class="btn-download" disabled>Simpan Twibbon</button>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -137,28 +247,16 @@
         const resetBtn = document.getElementById('reset-btn');
         const container = document.getElementById('canvas-container');
 
-        // Load Frame
         const frameImg = new Image();
         frameImg.src = 'frame.png'; 
 
         let userImg = null;
-        
-        // State transformasi gambar
-        let imgX = 0;
-        let imgY = 0;
-        let baseScale = 1; 
-        let userZoomPerc = 100; // Persentase zoom dari slider (10% - 400%)
-        let rotationAngle = 0;  // Derajat rotasi (0, 90, 180, 270)
+        let imgX = 0, imgY = 0, baseScale = 1; 
+        let userZoomPerc = 100, rotationAngle = 0;
+        let isDragging = false, startX, startY;
 
-        // State Drag
-        let isDragging = false;
-        let startX, startY;
+        frameImg.onload = () => { renderSemua(); };
 
-        frameImg.onload = () => {
-            renderSemua();
-        };
-
-        // Baca file upload
         uploadInput.addEventListener('change', (e) => {
             const file = e.target.files[0];
             if (!file) return;
@@ -168,13 +266,10 @@
                 userImg = new Image();
                 userImg.onload = () => {
                     resetKondisiFoto();
-                    
-                    // Aktifkan kontrol
                     downloadBtn.disabled = false;
                     zoomSlider.disabled = false;
                     rotateBtn.disabled = false;
                     resetBtn.disabled = false;
-                    
                     renderSemua();
                 };
                 userImg.src = event.target.result;
@@ -187,113 +282,72 @@
             rotationAngle = 0;
             userZoomPerc = 100;
             zoomSlider.value = 100;
-            
-            // Hitung base scale awal biar fit-cover
             baseScale = Math.max(canvas.width / userImg.width, canvas.height / userImg.height);
-            
-            // Tengahkan posisi koordinat
             imgX = canvas.width / 2;
             imgY = canvas.height / 2;
         }
 
-        // Fungsi Render Utama
         function renderSemua() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
             if (userImg) {
                 ctx.save();
-                
-                // Pindahkan anchor ke titik koordinat gambar (untuk mempermudah translasi & rotasi)
                 ctx.translate(imgX, imgY);
-                
-                // Jalankan rotasi berdasarkan derajat (diubah ke Radian)
                 ctx.rotate((rotationAngle * Math.PI) / 180);
-                
-                // Hitung skala final gabungan baseScale dan persentase slider
                 const finalScale = baseScale * (userZoomPerc / 100);
-                
-                // Gambar dengan poros tengah di (0,0) canvas hasil translate
-                ctx.drawImage(
-                    userImg, 
-                    -(userImg.width * finalScale) / 2, 
-                    -(userImg.height * finalScale) / 2, 
-                    userImg.width * finalScale, 
-                    userImg.height * finalScale
-                );
-                
+                ctx.drawImage(userImg, -(userImg.width * finalScale) / 2, -(userImg.height * finalScale) / 2, userImg.width * finalScale, userImg.height * finalScale);
                 ctx.restore();
             }
-
-            // Tempel frame di lapisan paling atas
             ctx.drawImage(frameImg, 0, 0, canvas.width, canvas.height);
         }
 
-        // Event Slider Zoom
         zoomSlider.addEventListener('input', (e) => {
             userZoomPerc = parseInt(e.target.value);
             renderSemua();
         });
 
-        // Event Tombol Rotasi (Tambah 90 derajat tiap klik)
         rotateBtn.addEventListener('click', () => {
             rotationAngle = (rotationAngle + 90) % 360;
             renderSemua();
         });
 
-        // Event Tombol Reset
         resetBtn.addEventListener('click', () => {
             resetKondisiFoto();
             renderSemua();
         });
 
-        // Logika Geser/Drag (Mouse & Touchscreen)
         function mulaiGeser(e) {
             if (!userImg) return;
             isDragging = true;
-            
             const clientX = e.touches ? e.touches[0].clientX : e.clientX;
             const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-
             const rect = canvas.getBoundingClientRect();
-            const visualScaleX = canvas.width / rect.width;
-            const visualScaleY = canvas.height / rect.height;
-
-            startX = clientX * visualScaleX - imgX;
-            startY = clientY * visualScaleY - imgY;
+            startX = clientX * (canvas.width / rect.width) - imgX;
+            startY = clientY * (canvas.height / rect.height) - imgY;
         }
 
         function prosesGeser(e) {
             if (!isDragging) return;
-            
             const clientX = e.touches ? e.touches[0].clientX : e.clientX;
             const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-
             const rect = canvas.getBoundingClientRect();
-            const visualScaleX = canvas.width / rect.width;
-            const visualScaleY = canvas.height / rect.height;
-
-            imgX = clientX * visualScaleX - startX;
-            imgY = clientY * visualScaleY - startY;
-
+            imgX = clientX * (canvas.width / rect.width) - startX;
+            imgY = clientY * (canvas.height / rect.height) - startY;
             renderSemua();
         }
 
-        function selesaiGeser() {
-            isDragging = false;
-        }
+        function selesaiGeser() { isDragging = false; }
 
         container.addEventListener('mousedown', mulaiGeser);
         window.addEventListener('mousemove', prosesGeser);
         window.addEventListener('mouseup', selesaiGeser);
-
         container.addEventListener('touchstart', mulaiGeser);
         window.addEventListener('touchmove', prosesGeser);
         window.addEventListener('touchend', selesaiGeser);
 
-        // Download Final
         downloadBtn.addEventListener('click', () => {
             const link = document.createElement('a');
-            link.download = 'twibbon-perfect-portrait.png';
+            link.download = 'twibbon-mobile-pro.png';
             link.href = canvas.toDataURL('image/png');
             link.click();
         });

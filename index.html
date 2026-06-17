@@ -3,72 +3,79 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Twibbon Maker 1920x1080</title>
+    <title>Twibbon Maker 1080x1920 (Portrait)</title>
     <style>
         body { 
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
             text-align: center; 
-            padding: 20px; 
+            padding: 15px; 
             background-color: #f5f7fb;
             color: #333;
+            margin: 0;
         }
-        h1 { margin-bottom: 5px; }
-        p { color: #666; margin-top: 0; }
+        h1 { margin-bottom: 5px; font-size: 24px; }
+        p { color: #666; margin-top: 0; font-size: 14px; }
         
         #canvas-container { 
             position: relative; 
             display: inline-block; 
-            margin-top: 20px; 
-            max-width: 90%; /* Supaya tidak luber di layar HP */
+            margin-top: 15px; 
+            max-width: 90%; 
+            max-height: 70vh; /* Membatasi tinggi agar tidak terlalu panjang di layar HP */
             box-shadow: 0 4px 15px rgba(0,0,0,0.1);
             background: #fff;
-            border-radius: 8px;
+            border-radius: 12px;
             overflow: hidden;
         }
         
-        /* CSS ini memastikan canvas muat di layar, tapi resolusi aslinya tetap 1920x1080 */
+        /* CSS responsif menjaga rasio portrait 9:16 tetap aman di semua device */
         canvas { 
             display: block;
             max-width: 100%; 
+            max-height: 70vh;
+            object-fit: contain;
             height: auto; 
         }
         
         .controls { 
             margin-top: 20px; 
+            margin-bottom: 30px;
         }
         
         button {
-            padding: 12px 25px;
+            padding: 12px 30px;
             font-size: 16px;
-            background-color: #007bff;
+            background-color: #28a745; /* Diubah hijau agar estetik */
             color: white;
             border: none;
-            border-radius: 5px;
+            border-radius: 25px;
             cursor: pointer;
             font-weight: bold;
-            transition: background 0.2s;
+            box-shadow: 0 3px 10px rgba(40, 167, 69, 0.3);
+            transition: all 0.2s;
         }
-        button:hover { background-color: #0056b3; }
-        button:disabled { background-color: #ccc; cursor: not-allowed; }
+        button:hover { background-color: #218838; transform: translateY(-1px); }
+        button:disabled { background-color: #ccc; cursor: not-allowed; box-shadow: none; }
         
         input[type="file"] {
-            margin: 15px 0;
+            margin: 10px 0;
+            font-size: 14px;
         }
     </style>
 </head>
 <body>
 
-    <h1>Twibbon Maker 🚀</h1>
-    <p>Upload fotomu untuk dipasang ke frame landscape (1920x1080).</p>
+    <h1>Twibbon Maker 📸</h1>
+    <p>Upload fotomu untuk dipasang ke frame portrait (1080x1920).</p>
 
     <input type="file" id="upload-input" accept="image/*">
     
     <div id="canvas-container">
-        <canvas id="twibbonCanvas" width="1920" height="1080"></canvas>
+        <canvas id="twibbonCanvas" width="1080" height="1920"></canvas>
     </div>
 
     <div class="controls">
-        <button id="download-btn" disabled>Download Twibbon</button>
+        <button id="download-btn" disabled>Download Hasil</button>
     </div>
 
     <script>
@@ -77,18 +84,18 @@
         const uploadInput = document.getElementById('upload-input');
         const downloadBtn = document.getElementById('download-btn');
 
-        // 1. Load Frame Twibbon 1920x1080 kamu
+        // 1. Load Frame Twibbon Portrait 1080x1920
         const frameImg = new Image();
-        frameImg.src = 'frame.png'; // Pastikan file frame.png kamu juga berukuran 1920x1080
+        frameImg.src = 'frame.png'; // Pastikan file frame.png di GitHub berukuran 1080x1920
 
         let userImg = null;
 
         frameImg.onload = () => {
-            // Tampilkan frame sebagai base pertama kali
+            // Gambar placeholder frame saat pertama kali dimuat
             ctx.drawImage(frameImg, 0, 0, canvas.width, canvas.height);
         };
 
-        // 2. Baca file yang di-upload user
+        // 2. Baca file upload user
         uploadInput.addEventListener('change', (e) => {
             const file = e.target.files[0];
             if (!file) return;
@@ -104,32 +111,30 @@
             reader.readAsDataURL(file);
         });
 
-        // 3. Proses penggabungan gambar di canvas
+        // 3. Gabungkan gambar ke Canvas vertikal
         function prosesTwibbon() {
-            // Bersihkan canvas sebelum menggambar ulang
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
             if (userImg) {
-                // Logika Cover: Foto user akan otomatis menyesuaikan diri agar memenuhi area 1920x1080
+                // Logika Cover untuk ukuran vertikal (9:16)
                 const scale = Math.max(canvas.width / userImg.width, canvas.height / userImg.height);
                 const x = (canvas.width / 2) - (userImg.width / 2) * scale;
                 const y = (canvas.height / 2) - (userImg.height / 2) * scale;
                 
-                // Gambar foto user di background (layer bawah)
+                // Gambar foto user (lapisan bawah)
                 ctx.drawImage(userImg, x, y, userImg.width * scale, userImg.height * scale);
             }
 
-            // Gambar frame PNG transparan di atasnya (layer atas)
+            // Gambar frame vertikal (lapisan atas)
             ctx.drawImage(frameImg, 0, 0, canvas.width, canvas.height);
             
-            // Aktifkan tombol download
             downloadBtn.disabled = false;
         }
 
-        // 4. Fungsi Download Hasil Akhir
+        // 4. Download Hasil Akhir Portrait
         downloadBtn.addEventListener('click', () => {
             const link = document.createElement('a');
-            link.download = 'twibbon-1080p.png';
+            link.download = 'twibbon-portrait.png';
             link.href = canvas.toDataURL('image/png');
             link.click();
         });

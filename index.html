@@ -2,8 +2,8 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Twibbon Maker 1080x1920 (Portrait)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Twibbon Maker Pro (1080x1920)</title>
     <style>
         body { 
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
@@ -19,43 +19,82 @@
         #canvas-container { 
             position: relative; 
             display: inline-block; 
-            margin-top: 15px; 
+            margin-top: 10px; 
             max-width: 90%; 
-            max-height: 70vh; /* Membatasi tinggi agar tidak terlalu panjang di layar HP */
+            max-height: 60vh; 
             box-shadow: 0 4px 15px rgba(0,0,0,0.1);
             background: #fff;
             border-radius: 12px;
             overflow: hidden;
+            cursor: move;
+            touch-action: none;
         }
         
-        /* CSS responsif menjaga rasio portrait 9:16 tetap aman di semua device */
         canvas { 
             display: block;
             max-width: 100%; 
-            max-height: 70vh;
+            max-height: 60vh;
             object-fit: contain;
             height: auto; 
         }
         
         .controls { 
-            margin-top: 20px; 
+            margin-top: 15px; 
             margin-bottom: 30px;
+            padding: 0 10px;
         }
         
+        .slider-container {
+            margin: 15px auto;
+            max-width: 300px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        .slider-container label {
+            font-size: 14px;
+            font-weight: bold;
+            color: #555;
+        }
+
+        input[type="range"] {
+            flex-index: 1;
+            width: 100%;
+            accent-color: #007bff;
+        }
+
+        .btn-group {
+            margin-bottom: 15px;
+        }
+
         button {
-            padding: 12px 30px;
-            font-size: 16px;
-            background-color: #28a745; /* Diubah hijau agar estetik */
-            color: white;
+            padding: 10px 20px;
+            font-size: 15px;
+            margin: 5px;
             border: none;
             border-radius: 25px;
             cursor: pointer;
             font-weight: bold;
-            box-shadow: 0 3px 10px rgba(40, 167, 69, 0.3);
             transition: all 0.2s;
         }
-        button:hover { background-color: #218838; transform: translateY(-1px); }
-        button:disabled { background-color: #ccc; cursor: not-allowed; box-shadow: none; }
+
+        .btn-action {
+            background-color: #6c757d;
+            color: white;
+        }
+        .btn-action:hover { background-color: #5a6268; }
+
+        .btn-download {
+            background-color: #28a745;
+            color: white;
+            padding: 12px 35px;
+            font-size: 16px;
+            box-shadow: 0 3px 10px rgba(40, 167, 69, 0.3);
+        }
+        .btn-download:hover { background-color: #218838; transform: translateY(-1px); }
+        .btn-download:disabled { background-color: #ccc; cursor: not-allowed; box-shadow: none; transform: none; }
         
         input[type="file"] {
             margin: 10px 0;
@@ -66,7 +105,7 @@
 <body>
 
     <h1>Twibbon Maker 📸</h1>
-    <p>Upload fotomu untuk dipasang ke frame portrait (1080x1920).</p>
+    <p>Geser foto langsung di frame. Gunakan slider untuk zoom dan tombol putar jika miring.</p>
 
     <input type="file" id="upload-input" accept="image/*">
     
@@ -75,7 +114,17 @@
     </div>
 
     <div class="controls">
-        <button id="download-btn" disabled>Download Hasil</button>
+        <div class="slider-container">
+            <label>Zoom:</label>
+            <input type="range" id="zoom-slider" min="10" max="400" value="100" disabled>
+        </div>
+
+        <div class="btn-group">
+            <button id="rotate-btn" class="btn-action" disabled>🔄 Putar 90°</button>
+            <button id="reset-btn" class="btn-action" disabled>Reset</button>
+        </div>
+        
+        <button id="download-btn" class="btn-download" disabled>Download Hasil</button>
     </div>
 
     <script>
@@ -83,19 +132,33 @@
         const ctx = canvas.getContext('2d');
         const uploadInput = document.getElementById('upload-input');
         const downloadBtn = document.getElementById('download-btn');
+        const zoomSlider = document.getElementById('zoom-slider');
+        const rotateBtn = document.getElementById('rotate-btn');
+        const resetBtn = document.getElementById('reset-btn');
+        const container = document.getElementById('canvas-container');
 
-        // 1. Load Frame Twibbon Portrait 1080x1920
+        // Load Frame
         const frameImg = new Image();
-        frameImg.src = 'frame.png'; // Pastikan file frame.png di GitHub berukuran 1080x1920
+        frameImg.src = 'frame.png'; 
 
         let userImg = null;
+        
+        // State transformasi gambar
+        let imgX = 0;
+        let imgY = 0;
+        let baseScale = 1; 
+        let userZoomPerc = 100; // Persentase zoom dari slider (10% - 400%)
+        let rotationAngle = 0;  // Derajat rotasi (0, 90, 180, 270)
+
+        // State Drag
+        let isDragging = false;
+        let startX, startY;
 
         frameImg.onload = () => {
-            // Gambar placeholder frame saat pertama kali dimuat
-            ctx.drawImage(frameImg, 0, 0, canvas.width, canvas.height);
+            renderSemua();
         };
 
-        // 2. Baca file upload user
+        // Baca file upload
         uploadInput.addEventListener('change', (e) => {
             const file = e.target.files[0];
             if (!file) return;
@@ -104,37 +167,133 @@
             reader.onload = (event) => {
                 userImg = new Image();
                 userImg.onload = () => {
-                    prosesTwibbon();
+                    resetKondisiFoto();
+                    
+                    // Aktifkan kontrol
+                    downloadBtn.disabled = false;
+                    zoomSlider.disabled = false;
+                    rotateBtn.disabled = false;
+                    resetBtn.disabled = false;
+                    
+                    renderSemua();
                 };
                 userImg.src = event.target.result;
             };
             reader.readAsDataURL(file);
         });
 
-        // 3. Gabungkan gambar ke Canvas vertikal
-        function prosesTwibbon() {
+        function resetKondisiFoto() {
+            if(!userImg) return;
+            rotationAngle = 0;
+            userZoomPerc = 100;
+            zoomSlider.value = 100;
+            
+            // Hitung base scale awal biar fit-cover
+            baseScale = Math.max(canvas.width / userImg.width, canvas.height / userImg.height);
+            
+            // Tengahkan posisi koordinat
+            imgX = canvas.width / 2;
+            imgY = canvas.height / 2;
+        }
+
+        // Fungsi Render Utama
+        function renderSemua() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
             if (userImg) {
-                // Logika Cover untuk ukuran vertikal (9:16)
-                const scale = Math.max(canvas.width / userImg.width, canvas.height / userImg.height);
-                const x = (canvas.width / 2) - (userImg.width / 2) * scale;
-                const y = (canvas.height / 2) - (userImg.height / 2) * scale;
+                ctx.save();
                 
-                // Gambar foto user (lapisan bawah)
-                ctx.drawImage(userImg, x, y, userImg.width * scale, userImg.height * scale);
+                // Pindahkan anchor ke titik koordinat gambar (untuk mempermudah translasi & rotasi)
+                ctx.translate(imgX, imgY);
+                
+                // Jalankan rotasi berdasarkan derajat (diubah ke Radian)
+                ctx.rotate((rotationAngle * Math.PI) / 180);
+                
+                // Hitung skala final gabungan baseScale dan persentase slider
+                const finalScale = baseScale * (userZoomPerc / 100);
+                
+                // Gambar dengan poros tengah di (0,0) canvas hasil translate
+                ctx.drawImage(
+                    userImg, 
+                    -(userImg.width * finalScale) / 2, 
+                    -(userImg.height * finalScale) / 2, 
+                    userImg.width * finalScale, 
+                    userImg.height * finalScale
+                );
+                
+                ctx.restore();
             }
 
-            // Gambar frame vertikal (lapisan atas)
+            // Tempel frame di lapisan paling atas
             ctx.drawImage(frameImg, 0, 0, canvas.width, canvas.height);
-            
-            downloadBtn.disabled = false;
         }
 
-        // 4. Download Hasil Akhir Portrait
+        // Event Slider Zoom
+        zoomSlider.addEventListener('input', (e) => {
+            userZoomPerc = parseInt(e.target.value);
+            renderSemua();
+        });
+
+        // Event Tombol Rotasi (Tambah 90 derajat tiap klik)
+        rotateBtn.addEventListener('click', () => {
+            rotationAngle = (rotationAngle + 90) % 360;
+            renderSemua();
+        });
+
+        // Event Tombol Reset
+        resetBtn.addEventListener('click', () => {
+            resetKondisiFoto();
+            renderSemua();
+        });
+
+        // Logika Geser/Drag (Mouse & Touchscreen)
+        function mulaiGeser(e) {
+            if (!userImg) return;
+            isDragging = true;
+            
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+            const rect = canvas.getBoundingClientRect();
+            const visualScaleX = canvas.width / rect.width;
+            const visualScaleY = canvas.height / rect.height;
+
+            startX = clientX * visualScaleX - imgX;
+            startY = clientY * visualScaleY - imgY;
+        }
+
+        function prosesGeser(e) {
+            if (!isDragging) return;
+            
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+            const rect = canvas.getBoundingClientRect();
+            const visualScaleX = canvas.width / rect.width;
+            const visualScaleY = canvas.height / rect.height;
+
+            imgX = clientX * visualScaleX - startX;
+            imgY = clientY * visualScaleY - startY;
+
+            renderSemua();
+        }
+
+        function selesaiGeser() {
+            isDragging = false;
+        }
+
+        container.addEventListener('mousedown', mulaiGeser);
+        window.addEventListener('mousemove', prosesGeser);
+        window.addEventListener('mouseup', selesaiGeser);
+
+        container.addEventListener('touchstart', mulaiGeser);
+        window.addEventListener('touchmove', prosesGeser);
+        window.addEventListener('touchend', selesaiGeser);
+
+        // Download Final
         downloadBtn.addEventListener('click', () => {
             const link = document.createElement('a');
-            link.download = 'twibbon-portrait.png';
+            link.download = 'twibbon-perfect-portrait.png';
             link.href = canvas.toDataURL('image/png');
             link.click();
         });

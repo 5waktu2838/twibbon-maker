@@ -3,23 +3,68 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Twibbon Maker Simple</title>
+    <title>Twibbon Maker 1920x1080</title>
     <style>
-        body { font-family: sans-serif; text-align: center; padding: 20px; }
-        #canvas-container { position: relative; display: inline-block; margin-top: 20px; max-width: 100%; }
-        canvas { border: 1px solid #ccc; max-width: 100%; height: auto; }
-        .controls { margin-top: 15px; }
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            text-align: center; 
+            padding: 20px; 
+            background-color: #f5f7fb;
+            color: #333;
+        }
+        h1 { margin-bottom: 5px; }
+        p { color: #666; margin-top: 0; }
+        
+        #canvas-container { 
+            position: relative; 
+            display: inline-block; 
+            margin-top: 20px; 
+            max-width: 90%; /* Supaya tidak luber di layar HP */
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            background: #fff;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        /* CSS ini memastikan canvas muat di layar, tapi resolusi aslinya tetap 1920x1080 */
+        canvas { 
+            display: block;
+            max-width: 100%; 
+            height: auto; 
+        }
+        
+        .controls { 
+            margin-top: 20px; 
+        }
+        
+        button {
+            padding: 12px 25px;
+            font-size: 16px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.2s;
+        }
+        button:hover { background-color: #0056b3; }
+        button:disabled { background-color: #ccc; cursor: not-allowed; }
+        
+        input[type="file"] {
+            margin: 15px 0;
+        }
     </style>
 </head>
 <body>
 
     <h1>Twibbon Maker 🚀</h1>
-    <p>Pilih fotomu untuk dipasangkan ke frame kami.</p>
+    <p>Upload fotomu untuk dipasang ke frame landscape (1920x1080).</p>
 
     <input type="file" id="upload-input" accept="image/*">
     
     <div id="canvas-container">
-        <canvas id="twibbonCanvas" width="800" height="800"></canvas>
+        <canvas id="twibbonCanvas" width="1920" height="1080"></canvas>
     </div>
 
     <div class="controls">
@@ -32,18 +77,18 @@
         const uploadInput = document.getElementById('upload-input');
         const downloadBtn = document.getElementById('download-btn');
 
-        // 1. Load Frame Twibbon Kamu
+        // 1. Load Frame Twibbon 1920x1080 kamu
         const frameImg = new Image();
-        frameImg.src = 'frame.png'; // Ganti dengan nama file frame kamu di GitHub nanti
+        frameImg.src = 'frame.png'; // Pastikan file frame.png kamu juga berukuran 1920x1080
 
         let userImg = null;
 
         frameImg.onload = () => {
-            // Gambar frame pertama kali sebagai placeholder
+            // Tampilkan frame sebagai base pertama kali
             ctx.drawImage(frameImg, 0, 0, canvas.width, canvas.height);
         };
 
-        // 2. Handle Upload Foto User
+        // 2. Baca file yang di-upload user
         uploadInput.addEventListener('change', (e) => {
             const file = e.target.files[0];
             if (!file) return;
@@ -59,32 +104,32 @@
             reader.readAsDataURL(file);
         });
 
-        // 3. Proses Penggabungan Gambar
+        // 3. Proses penggabungan gambar di canvas
         function prosesTwibbon() {
-            // Bersihkan canvas
+            // Bersihkan canvas sebelum menggambar ulang
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
             if (userImg) {
-                // Hitung rasio agar foto user memenuhi canvas (Cover effect)
+                // Logika Cover: Foto user akan otomatis menyesuaikan diri agar memenuhi area 1920x1080
                 const scale = Math.max(canvas.width / userImg.width, canvas.height / userImg.height);
                 const x = (canvas.width / 2) - (userImg.width / 2) * scale;
                 const y = (canvas.height / 2) - (userImg.height / 2) * scale;
                 
-                // Gambar foto user di lapis bawah
+                // Gambar foto user di background (layer bawah)
                 ctx.drawImage(userImg, x, y, userImg.width * scale, userImg.height * scale);
             }
 
-            // Gambar frame di lapis atas (menutupi foto user)
+            // Gambar frame PNG transparan di atasnya (layer atas)
             ctx.drawImage(frameImg, 0, 0, canvas.width, canvas.height);
             
             // Aktifkan tombol download
             downloadBtn.disabled = false;
         }
 
-        // 4. Fungsi Download
+        // 4. Fungsi Download Hasil Akhir
         downloadBtn.addEventListener('click', () => {
             const link = document.createElement('a');
-            link.download = 'twibbon-hasil.png';
+            link.download = 'twibbon-1080p.png';
             link.href = canvas.toDataURL('image/png');
             link.click();
         });

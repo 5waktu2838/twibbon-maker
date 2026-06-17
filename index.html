@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Twibbon Maker Simple</title>
+    <style>
+        body { font-family: sans-serif; text-align: center; padding: 20px; }
+        #canvas-container { position: relative; display: inline-block; margin-top: 20px; max-width: 100%; }
+        canvas { border: 1px solid #ccc; max-width: 100%; height: auto; }
+        .controls { margin-top: 15px; }
+    </style>
+</head>
+<body>
+
+    <h1>Twibbon Maker 🚀</h1>
+    <p>Pilih fotomu untuk dipasangkan ke frame kami.</p>
+
+    <input type="file" id="upload-input" accept="image/*">
+    
+    <div id="canvas-container">
+        <canvas id="twibbonCanvas" width="800" height="800"></canvas>
+    </div>
+
+    <div class="controls">
+        <button id="download-btn" disabled>Download Twibbon</button>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('twibbonCanvas');
+        const ctx = canvas.getContext('2d');
+        const uploadInput = document.getElementById('upload-input');
+        const downloadBtn = document.getElementById('download-btn');
+
+        // 1. Load Frame Twibbon Kamu
+        const frameImg = new Image();
+        frameImg.src = 'frame.png'; // Ganti dengan nama file frame kamu di GitHub nanti
+
+        let userImg = null;
+
+        frameImg.onload = () => {
+            // Gambar frame pertama kali sebagai placeholder
+            ctx.drawImage(frameImg, 0, 0, canvas.width, canvas.height);
+        };
+
+        // 2. Handle Upload Foto User
+        uploadInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                userImg = new Image();
+                userImg.onload = () => {
+                    prosesTwibbon();
+                };
+                userImg.src = event.target.result;
+            };
+            reader.readAsDataURL(file);
+        });
+
+        // 3. Proses Penggabungan Gambar
+        function prosesTwibbon() {
+            // Bersihkan canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            if (userImg) {
+                // Hitung rasio agar foto user memenuhi canvas (Cover effect)
+                const scale = Math.max(canvas.width / userImg.width, canvas.height / userImg.height);
+                const x = (canvas.width / 2) - (userImg.width / 2) * scale;
+                const y = (canvas.height / 2) - (userImg.height / 2) * scale;
+                
+                // Gambar foto user di lapis bawah
+                ctx.drawImage(userImg, x, y, userImg.width * scale, userImg.height * scale);
+            }
+
+            // Gambar frame di lapis atas (menutupi foto user)
+            ctx.drawImage(frameImg, 0, 0, canvas.width, canvas.height);
+            
+            // Aktifkan tombol download
+            downloadBtn.disabled = false;
+        }
+
+        // 4. Fungsi Download
+        downloadBtn.addEventListener('click', () => {
+            const link = document.createElement('a');
+            link.download = 'twibbon-hasil.png';
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        });
+    </script>
+</body>
+</html>
